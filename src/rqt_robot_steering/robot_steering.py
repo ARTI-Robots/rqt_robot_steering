@@ -39,6 +39,7 @@ from python_qt_binding.QtCore import Qt, QTimer, Slot
 from python_qt_binding.QtGui import QKeySequence
 from python_qt_binding.QtWidgets import QShortcut, QWidget
 from rqt_gui_py.plugin import Plugin
+from ackermann_msgs.msg import AckermannDrive
 
 
 class RobotSteering(Plugin):
@@ -50,6 +51,7 @@ class RobotSteering(Plugin):
         self.setObjectName('RobotSteering')
 
         self._publisher = None
+        self.topic = ""
 
         self._widget = QWidget()
         rp = rospkg.RosPack()
@@ -61,6 +63,9 @@ class RobotSteering(Plugin):
             self._widget.setWindowTitle(
                 self._widget.windowTitle() + (' (%d)' % context.serial_number()))
         context.add_widget(self._widget)
+
+        self.cmd_type = self._widget.type_combobox.currentIndex()
+        self._widget.type_combobox.currentIndexChanged.connect(self._on_cmd_type_changed)
 
         self._widget.topic_line_edit.textChanged.connect(
             self._on_topic_changed)
@@ -177,13 +182,28 @@ class RobotSteering(Plugin):
     @Slot(str)
     def _on_topic_changed(self, topic):
         topic = str(topic)
+        self.topic = topic
         self._unregister_publisher()
         if topic == '':
             return
         try:
-            self._publisher = rospy.Publisher(topic, Twist, queue_size=10)
+            if self.cmd_type == 0:
+                self._publisher = rospy.Publisher(topic, Twist, queue_size=10)
+            else:
+                self._publisher = rospy.Publisher(topic, AckermannDrive, queue_size=10)
         except TypeError:
-            self._publisher = rospy.Publisher(topic, Twist)
+            if self.cmd_type == 0:
+                self._publisher = rospy.Publisher(topic, Twist)
+            else:
+                self._publisher = rospy.Publisher(topic, AckermannDrive)
+
+    def _on_cmd_type_changed(self, index):
+        """
+        If an element in the type-combobox is changed, this method is called with the selected index as a parameter.
+        :param index: The current selected index. '0' means skidsteering and '1' means ackermann type of message.
+        """
+        self.cmd_type = index
+        self._on_topic_changed(self.topic)
 
     def _on_stop_pressed(self):
         # If the current value of sliders is zero directly send stop twist msg
@@ -260,9 +280,15 @@ class RobotSteering(Plugin):
             self._widget.z_angular_slider.value() - self._widget.z_angular_slider.pageStep())
 
     def _on_parameter_changed(self):
-        self._send_twist(
-            self._widget.x_linear_slider.value() / RobotSteering.slider_factor,
-                         self._widget.z_angular_slider.value() / RobotSteering.slider_factor)
+        type_index = self._widget.type_combobox.currentIndex()
+        if type_index == 0:
+            self._send_twist(
+                self._widget.x_linear_slider.value() / RobotSteering.slider_factor,
+                             self._widget.z_angular_slider.value() / RobotSteering.slider_factor)
+        elif type_index == 1:
+            self._send_ackermann(
+                self._widget.x_linear_slider.value() / RobotSteering.slider_factor,
+                self._widget.z_angular_slider.value() / RobotSteering.slider_factor)
 
     def _send_twist(self, x_linear, z_angular):
         if self._publisher is None:
@@ -283,6 +309,23 @@ class RobotSteering(Plugin):
         else:
             self.zero_cmd_sent = False
             self._publisher.publish(twist)
+
+    def _send_ackermann(self, x_linear, z_angular):
+        if self._publisher is None:
+            return
+
+        ackermann_cmd = AckermannDrive()
+        ackermann_cmd.speed = x_linear
+        ackermann_cmd.steering_angle = z_angular
+
+        # Only send the zero command once so other devices can take control
+        if x_linear == 0 and z_angular == 0:
+            if not self.zero_cmd_sent:
+                self.zero_cmd_sent = True
+                self._publisher.publish(ackermann_cmd)
+        else:
+            self.zero_cmd_sent = False
+            self._publisher.publish(ackermann_cmd)
 
     def _unregister_publisher(self):
         if self._publisher is not None:

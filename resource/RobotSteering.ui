@@ -27,6 +27,20 @@
       </widget>
      </item>
      <item>
+      <widget class="QComboBox" name="type_combobox">
+       <item>
+        <property name="text">
+         <string>skidsteering</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>ackermann</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="stop_push_button">
        <property name="toolTip">
         <string>Reset velocities to zero</string>
