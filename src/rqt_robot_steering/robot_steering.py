@@ -347,6 +347,8 @@ class RobotSteering(Plugin):
             'vw_max', self._widget.max_z_angular_double_spin_box.value())
         instance_settings.set_value(
             'vw_min', self._widget.min_z_angular_double_spin_box.value())
+        instance_settings.set_value(
+            'cmd_type', self._widget.type_combobox.currentIndex())
 
     def restore_settings(self, plugin_settings, instance_settings):
         value = instance_settings.value('topic', "/cmd_vel")
@@ -372,3 +374,8 @@ class RobotSteering(Plugin):
         value = instance_settings.value('vw_min', value)
         value = rospy.get_param("~default_vw_min", value)
         self._widget.min_z_angular_double_spin_box.setValue(float(value))
+
+        value = self._widget.type_combobox.currentIndex()
+        value = instance_settings.value('cmd_type', value)
+        self.cmd_type = value
+        self._widget.type_combobox.setCurrentIndex(int(value))
