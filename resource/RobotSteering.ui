@@ -19,7 +19,7 @@
      <item>
       <widget class="QLineEdit" name="topic_line_edit">
        <property name="toolTip">
-        <string>Topic to send Twist message to</string>
+        <string>Topic to send message to</string>
        </property>
        <property name="text">
         <string/>
@@ -27,15 +27,15 @@
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="type_combobox">
+      <widget class="QComboBox" name="type_combo_box">
        <item>
         <property name="text">
-         <string>skidsteering</string>
+         <string>geometry_msgs/Twist</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>ackermann</string>
+         <string>ackermann_msgs/AckermannDrive</string>
         </property>
        </item>
       </widget>

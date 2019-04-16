@@ -31,15 +31,15 @@
 from __future__ import division
 import os
 import rospkg
-
-from geometry_msgs.msg import Twist
 import rospy
+
+from ackermann_msgs.msg import AckermannDrive
+from geometry_msgs.msg import Twist
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import Qt, QTimer, Slot
 from python_qt_binding.QtGui import QKeySequence
 from python_qt_binding.QtWidgets import QShortcut, QWidget
 from rqt_gui_py.plugin import Plugin
-from ackermann_msgs.msg import AckermannDrive
 
 
 class RobotSteering(Plugin):
@@ -51,7 +51,6 @@ class RobotSteering(Plugin):
         self.setObjectName('RobotSteering')
 
         self._publisher = None
-        self.topic = ""
 
         self._widget = QWidget()
         rp = rospkg.RosPack()
@@ -64,8 +63,7 @@ class RobotSteering(Plugin):
                 self._widget.windowTitle() + (' (%d)' % context.serial_number()))
         context.add_widget(self._widget)
 
-        self.cmd_type = self._widget.type_combobox.currentIndex()
-        self._widget.type_combobox.currentIndexChanged.connect(self._on_cmd_type_changed)
+        self._widget.type_combo_box.currentIndexChanged.connect(self._on_type_changed)
 
         self._widget.topic_line_edit.textChanged.connect(
             self._on_topic_changed)
@@ -182,28 +180,21 @@ class RobotSteering(Plugin):
     @Slot(str)
     def _on_topic_changed(self, topic):
         topic = str(topic)
-        self.topic = topic
         self._unregister_publisher()
         if topic == '':
             return
+        msg_type = Twist if self._widget.type_combo_box.currentIndex() == 0 else AckermannDrive
         try:
-            if self.cmd_type == 0:
-                self._publisher = rospy.Publisher(topic, Twist, queue_size=10)
-            else:
-                self._publisher = rospy.Publisher(topic, AckermannDrive, queue_size=10)
+            self._publisher = rospy.Publisher(topic, msg_type, queue_size=10)
         except TypeError:
-            if self.cmd_type == 0:
-                self._publisher = rospy.Publisher(topic, Twist)
-            else:
-                self._publisher = rospy.Publisher(topic, AckermannDrive)
+            self._publisher = rospy.Publisher(topic, msg_type)
 
-    def _on_cmd_type_changed(self, index):
+    def _on_type_changed(self, index):
         """
-        If an element in the type-combobox is changed, this method is called with the selected index as a parameter.
-        :param index: The current selected index. '0' means skidsteering and '1' means ackermann type of message.
+        If an element in the type combo box is changed, this method is called with the selected index as a parameter.
+        :param index: The current selected index. '0' means Twist and '1' means Ackermann type of message.
         """
-        self.cmd_type = index
-        self._on_topic_changed(self.topic)
+        self._on_topic_changed(self._widget.topic_line_edit.text())
 
     def _on_stop_pressed(self):
         # If the current value of sliders is zero directly send stop twist msg
@@ -221,8 +212,9 @@ class RobotSteering(Plugin):
         self._on_parameter_changed()
 
     def _on_z_angular_slider_changed(self):
+        format_str = '%0.2f rad/s' if self._widget.type_combo_box.currentIndex() == 0 else '%0.2f rad'
         self._widget.current_z_angular_label.setText(
-            '%0.2f rad/s' % (self._widget.z_angular_slider.value() / RobotSteering.slider_factor))
+            format_str % (self._widget.z_angular_slider.value() / RobotSteering.slider_factor))
         self._on_parameter_changed()
 
     def _on_increase_x_linear_pressed(self):
@@ -280,12 +272,12 @@ class RobotSteering(Plugin):
             self._widget.z_angular_slider.value() - self._widget.z_angular_slider.pageStep())
 
     def _on_parameter_changed(self):
-        type_index = self._widget.type_combobox.currentIndex()
-        if type_index == 0:
+        cmd_type = self._widget.type_combo_box.currentIndex()
+        if cmd_type == 0:
             self._send_twist(
                 self._widget.x_linear_slider.value() / RobotSteering.slider_factor,
-                             self._widget.z_angular_slider.value() / RobotSteering.slider_factor)
-        elif type_index == 1:
+                self._widget.z_angular_slider.value() / RobotSteering.slider_factor)
+        elif cmd_type == 1:
             self._send_ackermann(
                 self._widget.x_linear_slider.value() / RobotSteering.slider_factor,
                 self._widget.z_angular_slider.value() / RobotSteering.slider_factor)
@@ -348,7 +340,7 @@ class RobotSteering(Plugin):
         instance_settings.set_value(
             'vw_min', self._widget.min_z_angular_double_spin_box.value())
         instance_settings.set_value(
-            'cmd_type', self._widget.type_combobox.currentIndex())
+            'cmd_type', self._widget.type_combo_box.currentIndex())
 
     def restore_settings(self, plugin_settings, instance_settings):
         value = instance_settings.value('topic', "/cmd_vel")
@@ -375,7 +367,7 @@ class RobotSteering(Plugin):
         value = rospy.get_param("~default_vw_min", value)
         self._widget.min_z_angular_double_spin_box.setValue(float(value))
 
-        value = self._widget.type_combobox.currentIndex()
+        value = self._widget.type_combo_box.currentIndex()
         value = instance_settings.value('cmd_type', value)
-        self.cmd_type = value
-        self._widget.type_combobox.setCurrentIndex(int(value))
+        self._widget.type_combo_box.setCurrentIndex(int(value))
+
