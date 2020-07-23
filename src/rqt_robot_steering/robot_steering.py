@@ -194,6 +194,13 @@ class RobotSteering(Plugin):
         If an element in the type combo box is changed, this method is called with the selected index as a parameter.
         :param index: The current selected index. '0' means Twist and '1' means Ackermann type of message.
         """
+
+        # If the type changed, automatically set the topic-name to default value
+        if self._widget.type_combo_box.currentIndex() == 0:
+            self._widget.topic_line_edit.setText("/cmd_vel")
+        else:
+            self._widget.topic_line_edit.setText("/cmd_ackermann")
+
         self._on_topic_changed(self._widget.topic_line_edit.text())
 
     def _on_stop_pressed(self):
