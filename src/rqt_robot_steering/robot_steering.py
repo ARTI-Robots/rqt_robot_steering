@@ -73,6 +73,8 @@ class RobotSteering(Plugin):
             self._on_x_linear_slider_changed)
         self._widget.z_angular_slider.valueChanged.connect(
             self._on_z_angular_slider_changed)
+        self._widget.y_linear_slider.valueChanged.connect(
+            self._on_y_linear_slider_changed)
 
         self._widget.increase_x_linear_push_button.pressed.connect(
             self._on_strong_increase_x_linear_pressed)
@@ -86,6 +88,12 @@ class RobotSteering(Plugin):
             self._on_reset_z_angular_pressed)
         self._widget.decrease_z_angular_push_button.pressed.connect(
             self._on_strong_decrease_z_angular_pressed)
+        self._widget.increase_y_linear_push_button.pressed.connect(
+            self._on_strong_increase_y_linear_pressed)
+        self._widget.reset_y_linear_push_button.pressed.connect(
+            self._on_reset_y_linear_pressed)
+        self._widget.decrease_y_linear_push_button.pressed.connect(
+            self._on_strong_decrease_y_linear_pressed)
 
         self._widget.max_x_linear_double_spin_box.valueChanged.connect(
             self._on_max_x_linear_changed)
@@ -95,6 +103,10 @@ class RobotSteering(Plugin):
             self._on_max_z_angular_changed)
         self._widget.min_z_angular_double_spin_box.valueChanged.connect(
             self._on_min_z_angular_changed)
+        self._widget.max_y_linear_double_spin_box.valueChanged.connect(
+            self._on_max_y_linear_changed)
+        self._widget.min_y_linear_double_spin_box.valueChanged.connect(
+            self._on_min_y_linear_changed)
 
         self.shortcut_w = QShortcut(QKeySequence(Qt.Key_W), self._widget)
         self.shortcut_w.setContext(Qt.ApplicationShortcut)
@@ -114,6 +126,13 @@ class RobotSteering(Plugin):
         self.shortcut_d = QShortcut(QKeySequence(Qt.Key_D), self._widget)
         self.shortcut_d.setContext(Qt.ApplicationShortcut)
         self.shortcut_d.activated.connect(self._on_decrease_z_angular_pressed)
+        self.shortcut_a.activated.connect(self._on_increase_y_linear_pressed)
+        self.shortcut_z = QShortcut(QKeySequence(Qt.Key_Z), self._widget)
+        self.shortcut_z.setContext(Qt.ApplicationShortcut)
+        self.shortcut_z.activated.connect(self._on_reset_y_linear_pressed)
+        self.shortcut_d = QShortcut(QKeySequence(Qt.Key_D), self._widget)
+        self.shortcut_d.setContext(Qt.ApplicationShortcut)
+        self.shortcut_d.activated.connect(self._on_decrease_y_linear_pressed)
 
         self.shortcut_shift_w = QShortcut(
             QKeySequence(Qt.SHIFT + Qt.Key_W), self._widget)
@@ -198,20 +217,36 @@ class RobotSteering(Plugin):
         # If the type changed, automatically set the topic-name to default value
         if self._widget.type_combo_box.currentIndex() == 0:
             self._widget.topic_line_edit.setText("/cmd_vel")
+            self._widget.current_y_linear_label.show()
+            self._widget.max_y_linear_double_spin_box.show()
+            self._widget.min_y_linear_double_spin_box.show()
+            self._widget.reset_y_linear_push_button.show()
+            self._widget.decrease_y_linear_push_button.show()
+            self._widget.increase_y_linear_push_button.show()
+            self._widget.y_linear_slider.show()
         else:
             self._widget.topic_line_edit.setText("/cmd_ackermann")
+            self._widget.current_y_linear_label.hide()
+            self._widget.max_y_linear_double_spin_box.hide()
+            self._widget.min_y_linear_double_spin_box.hide()
+            self._widget.reset_y_linear_push_button.hide()
+            self._widget.decrease_y_linear_push_button.hide()
+            self._widget.increase_y_linear_push_button.hide()
+            self._widget.y_linear_slider.hide()
 
         self._on_topic_changed(self._widget.topic_line_edit.text())
 
     def _on_stop_pressed(self):
         # If the current value of sliders is zero directly send stop twist msg
-        if self._widget.x_linear_slider.value() is 0 and \
-                self._widget.z_angular_slider.value() is 0:
+        if self._widget.x_linear_slider.value() == 0 and \
+                self._widget.z_angular_slider.value() == 0 and \
+                self._widget.y_linear_slider.value() == 0:
             self.zero_cmd_sent = False
             self._on_parameter_changed()
         else:
             self._widget.x_linear_slider.setValue(0)
             self._widget.z_angular_slider.setValue(0)
+            self._widget.y_linear_slider.setValue(0)
 
     def _on_x_linear_slider_changed(self):
         self._widget.current_x_linear_label.setText(
@@ -222,6 +257,12 @@ class RobotSteering(Plugin):
         format_str = '%0.2f rad/s' if self._widget.type_combo_box.currentIndex() == 0 else '%0.2f rad'
         self._widget.current_z_angular_label.setText(
             format_str % (self._widget.z_angular_slider.value() / RobotSteering.slider_factor))
+        self._on_parameter_changed()
+
+    def _on_y_linear_slider_changed(self):
+        format_str = '%0.2f m/s (y-axis)' if self._widget.type_combo_box.currentIndex() == 0 else '%0.2f rad'
+        self._widget.current_y_linear_label.setText(
+            format_str % (self._widget.y_linear_slider.value() / RobotSteering.slider_factor))
         self._on_parameter_changed()
 
     def _on_increase_x_linear_pressed(self):
@@ -246,6 +287,17 @@ class RobotSteering(Plugin):
         self._widget.z_angular_slider.setValue(
             self._widget.z_angular_slider.value() - self._widget.z_angular_slider.singleStep())
 
+    def _on_increase_y_linear_pressed(self):
+        self._widget.y_linear_slider.setValue(
+            self._widget.y_linear_slider.value() + self._widget.y_linear_slider.singleStep())
+
+    def _on_reset_y_linear_pressed(self):
+        self._widget.y_linear_slider.setValue(0)
+
+    def _on_decrease_y_linear_pressed(self):
+        self._widget.y_linear_slider.setValue(
+            self._widget.y_linear_slider.value() - self._widget.y_linear_slider.singleStep())
+
     def _on_max_x_linear_changed(self, value):
         self._widget.x_linear_slider.setMaximum(
             value * RobotSteering.slider_factor)
@@ -260,6 +312,14 @@ class RobotSteering(Plugin):
 
     def _on_min_z_angular_changed(self, value):
         self._widget.z_angular_slider.setMinimum(
+            value * RobotSteering.slider_factor)
+
+    def _on_max_y_linear_changed(self, value):
+        self._widget.y_linear_slider.setMaximum(
+            value * RobotSteering.slider_factor)
+
+    def _on_min_y_linear_changed(self, value):
+        self._widget.y_linear_slider.setMinimum(
             value * RobotSteering.slider_factor)
 
     def _on_strong_increase_x_linear_pressed(self):
@@ -278,30 +338,39 @@ class RobotSteering(Plugin):
         self._widget.z_angular_slider.setValue(
             self._widget.z_angular_slider.value() - self._widget.z_angular_slider.pageStep())
 
+    def _on_strong_increase_y_linear_pressed(self):
+        self._widget.y_linear_slider.setValue(
+            self._widget.y_linear_slider.value() + self._widget.y_linear_slider.pageStep())
+
+    def _on_strong_decrease_y_linear_pressed(self):
+        self._widget.y_linear_slider.setValue(
+            self._widget.y_linear_slider.value() - self._widget.y_linear_slider.pageStep())
+
     def _on_parameter_changed(self):
         cmd_type = self._widget.type_combo_box.currentIndex()
         if cmd_type == 0:
             self._send_twist(
                 self._widget.x_linear_slider.value() / RobotSteering.slider_factor,
-                self._widget.z_angular_slider.value() / RobotSteering.slider_factor)
+                self._widget.z_angular_slider.value() / RobotSteering.slider_factor,
+                self._widget.y_linear_slider.value() / RobotSteering.slider_factor)
         elif cmd_type == 1:
             self._send_ackermann(
                 self._widget.x_linear_slider.value() / RobotSteering.slider_factor,
                 self._widget.z_angular_slider.value() / RobotSteering.slider_factor)
 
-    def _send_twist(self, x_linear, z_angular):
+    def _send_twist(self, x_linear, z_angular, y_linear):
         if self._publisher is None:
             return
         twist = Twist()
         twist.linear.x = x_linear
-        twist.linear.y = 0
+        twist.linear.y = y_linear
         twist.linear.z = 0
         twist.angular.x = 0
         twist.angular.y = 0
         twist.angular.z = z_angular
 
         # Only send the zero command once so other devices can take control
-        if x_linear == 0 and z_angular == 0:
+        if x_linear == 0 and z_angular == 0 and y_linear == 0:
             if not self.zero_cmd_sent:
                 self.zero_cmd_sent = True
                 self._publisher.publish(twist)
@@ -347,6 +416,10 @@ class RobotSteering(Plugin):
         instance_settings.set_value(
             'vw_min', self._widget.min_z_angular_double_spin_box.value())
         instance_settings.set_value(
+            'vy_max', self._widget.max_y_linear_double_spin_box.value())
+        instance_settings.set_value(
+            'vy_min', self._widget.min_y_linear_double_spin_box.value())
+        instance_settings.set_value(
             'cmd_type', self._widget.type_combo_box.currentIndex())
 
     def restore_settings(self, plugin_settings, instance_settings):
@@ -373,6 +446,16 @@ class RobotSteering(Plugin):
         value = instance_settings.value('vw_min', value)
         value = rospy.get_param("~default_vw_min", value)
         self._widget.min_z_angular_double_spin_box.setValue(float(value))
+
+        value = self._widget.max_y_linear_double_spin_box.value()
+        value = instance_settings.value('vy_max', value)
+        value = rospy.get_param("~default_vy_max", value)
+        self._widget.max_y_linear_double_spin_box.setValue(float(value))
+
+        value = self._widget.min_y_linear_double_spin_box.value()
+        value = instance_settings.value('vy_min', value)
+        value = rospy.get_param("~default_vy_min", value)
+        self._widget.min_y_linear_double_spin_box.setValue(float(value))
 
         value = self._widget.type_combo_box.currentIndex()
         value = instance_settings.value('cmd_type', value)
