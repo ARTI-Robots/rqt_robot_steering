@@ -33,6 +33,7 @@ import os
 import rospkg
 import rospy
 
+
 from ackermann_msgs.msg import AckermannDrive
 from geometry_msgs.msg import Twist
 from python_qt_binding import loadUi
@@ -203,6 +204,7 @@ class RobotSteering(Plugin):
         if topic == '':
             return
         msg_type = Twist if self._widget.type_combo_box.currentIndex() == 0 else AckermannDrive
+        print('msg_type = ' + str(msg_type))
         try:
             self._publisher = rospy.Publisher(topic, msg_type, queue_size=10)
         except TypeError:
@@ -216,7 +218,7 @@ class RobotSteering(Plugin):
 
         # If the type changed, automatically set the topic-name to default value
         if self._widget.type_combo_box.currentIndex() == 0:
-            self._widget.topic_line_edit.setText("/cmd_vel")
+            self._widget.topic_line_edit.setText("/cmd_vel_in")
             self._widget.current_y_linear_label.show()
             self._widget.max_y_linear_double_spin_box.show()
             self._widget.min_y_linear_double_spin_box.show()
@@ -225,7 +227,7 @@ class RobotSteering(Plugin):
             self._widget.increase_y_linear_push_button.show()
             self._widget.y_linear_slider.show()
         else:
-            self._widget.topic_line_edit.setText("/cmd_ackermann")
+            self._widget.topic_line_edit.setText("/cmd_vel_in")
             self._widget.current_y_linear_label.hide()
             self._widget.max_y_linear_double_spin_box.hide()
             self._widget.min_y_linear_double_spin_box.hide()
@@ -423,28 +425,28 @@ class RobotSteering(Plugin):
             'cmd_type', self._widget.type_combo_box.currentIndex())
 
     def restore_settings(self, plugin_settings, instance_settings):
-        value = instance_settings.value('topic', "/cmd_vel")
-        value = rospy.get_param("~default_topic", value)
+        value = instance_settings.value('topic', '/cmd_vel')
+        value = rospy.get_param('~default_topic', value)
         self._widget.topic_line_edit.setText(value)
 
         value = self._widget.max_x_linear_double_spin_box.value()
         value = instance_settings.value('vx_max', value)
-        value = rospy.get_param("~default_vx_max", value)
+        value = rospy.get_param('~default_vx_max', value)
         self._widget.max_x_linear_double_spin_box.setValue(float(value))
 
         value = self._widget.min_x_linear_double_spin_box.value()
         value = instance_settings.value('vx_min', value)
-        value = rospy.get_param("~default_vx_min", value)
+        value = rospy.get_param('~default_vx_min', value)
         self._widget.min_x_linear_double_spin_box.setValue(float(value))
 
         value = self._widget.max_z_angular_double_spin_box.value()
         value = instance_settings.value('vw_max', value)
-        value = rospy.get_param("~default_vw_max", value)
+        value = rospy.get_param('~default_vw_max', value)
         self._widget.max_z_angular_double_spin_box.setValue(float(value))
 
         value = self._widget.min_z_angular_double_spin_box.value()
         value = instance_settings.value('vw_min', value)
-        value = rospy.get_param("~default_vw_min", value)
+        value = rospy.get_param('~default_vw_min', value)
         self._widget.min_z_angular_double_spin_box.setValue(float(value))
 
         value = self._widget.max_y_linear_double_spin_box.value()
@@ -460,4 +462,3 @@ class RobotSteering(Plugin):
         value = self._widget.type_combo_box.currentIndex()
         value = instance_settings.value('cmd_type', value)
         self._widget.type_combo_box.setCurrentIndex(int(value))
-

@@ -2,6 +2,20 @@
 Changelog for package rqt_robot_steering
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.5.12 (2020-10-21)
+-------------------
+* fix shebang line for Python 3 (`#9 <https://github.com/ros-visualization/rqt_robot_steering/issues/9>`_)
+
+0.5.11 (2020-03-11)
+-------------------
+* bump CMake minimum version to avoid CMP0048 warning
+
+0.5.10 (2019-11-14)
+-------------------
+* minor cleanup (`#6 <https://github.com/ros-visualization/rqt_robot_steering/issues/6>`_)
+* add Python 3 conditional dependencies (`#5 <https://github.com/ros-visualization/rqt_robot_steering/issues/5>`_)
+* style: format code to conform to the PEP8 style (`#3 <https://github.com/ros-visualization/rqt_robot_steering/issues/3>`_)
+
 0.5.9 (2018-02-21)
 ------------------
 * always send zero twist when stop button is pressed (`#2 <https://github.com/ros-visualization/rqt_robot_steering/issues/2>`_)

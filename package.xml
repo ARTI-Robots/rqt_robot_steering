@@ -1,9 +1,14 @@
+<?xml version="1.0"?>
+<?xml-model
+  href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>rqt_robot_steering</name>
-  <version>0.5.9</version>
+  <version>0.5.12</version>
   <description>rqt_robot_steering provides a GUI plugin for steering a robot using Twist messages.</description>
   <maintainer email="dthomas@osrfoundation.org">Dirk Thomas</maintainer>
   <maintainer email="ablasdel@gmail.com">Aaron Blasdel</maintainer>
+  <maintainer email="srishtidhm@gmail.com">Srishti Dhamija</maintainer>
 
   <license>BSD</license>
 

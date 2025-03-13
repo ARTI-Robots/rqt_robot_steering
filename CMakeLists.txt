@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(rqt_robot_steering)
 # Load catkin and all dependencies required for this package
 find_package(catkin REQUIRED)
@@ -13,6 +13,6 @@ install(DIRECTORY resource
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-install(PROGRAMS scripts/rqt_robot_steering
+catkin_install_python(PROGRAMS scripts/rqt_robot_steering
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
